@@ -32,7 +32,7 @@ def iter_hashtag_pages(hashtag: str, request_fn: RequestFunction, **kwargs) -> I
 def iter_pages(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = kwargs.pop("start_url", None)
     if not start_url:
-        start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
+        start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/posts/')
     return generic_iter_pages(start_url, PageParser, request_fn, **kwargs)
 
 
@@ -205,7 +205,10 @@ class PageParser:
                 # If we limit the parsing just to the section element, it fixes it
                 # Please forgive me for parsing HTML with regex
                 logger.warning(f"No footer in article - reparsing HTML within <section> element")
-                html = re.search(r'<section.+?>(.+)</section>', raw_page.html).group(1)
+                section = re.search(r'<section.+?>(.+)</section>', raw_page.html)
+                if not section:
+                    break
+                html = section.group(1)
                 raw_page = utils.make_html_element(html=html)
                 raw_posts = raw_page.find(selection)
                 break

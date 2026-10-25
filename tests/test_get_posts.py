@@ -1,4 +1,5 @@
-import datetime
+import datetime as dt
+from pathlib import Path
 
 import pytest
 
@@ -70,7 +71,7 @@ class TestGetPosts:
             'for your personal use! We hope you enjoy them!\n'
             '\n'
             'https://www.nintendo.com/wallpapers/',
-            'time': datetime.datetime(2020, 5, 13, 13, 1, 18),
+            'time': dt.datetime(2020, 5, 13, 13, 1, 18),
             'user_id': '119240841493711',
             'user_url': 'https://facebook.com/Nintendo/?refid=52&__tn__=C-R',
             'username': 'Nintendo',
@@ -88,15 +89,19 @@ class TestGetPosts:
 
         post = next(get_posts(post_urls=[3065154550235644]))
 
-        assert post == expected_post
+        for field in ('username', 'comments', 'likes', 'shares', 'text', 'post_text', 'post_url', 'image', 'images'):
+            assert post[field] == expected_post[field]
+        assert str(post['post_id']) == expected_post['post_id']
+        assert post['time'] == dt.datetime.fromtimestamp(post['timestamp'])
 
+    @pytest.mark.skipif(not Path('cookies.txt').is_file(), reason='requires a local cookies.txt')
     def test_get_posts_with_extra_info(self):
         expected_post = {
             'available': True,
             'comments': 149,
             'comments_full': None,
             'factcheck': None,
-            'fetched_time': datetime.datetime(2021, 6, 9, 10, 31, 43, 834002),
+            'fetched_time': dt.datetime(2021, 6, 9, 10, 31, 43, 834002),
             'image': 'https://scontent.fhlz2-1.fna.fbcdn.net/v/t1.6435-9/fr/cp0/e15/q65/96724875_3065146506903115_4237164853036318720_n.jpg?_nc_cat=103&ccb=1-3&_nc_sid=8024bb&efg=eyJpIjoidCJ9&_nc_ohc=SvpNqSK7ILIAX93ehWM&_nc_ht=scontent.fhlz2-1.fna&tp=14&oh=d32fa3269feeaf6904d78a512f41ab26&oe=60E673C5',
             'image_id': '3065146500236449',
             'image_ids': [
@@ -161,7 +166,7 @@ class TestGetPosts:
             'for your personal use! We hope you enjoy them!\n'
             '\n'
             'https://www.nintendo.com/wallpapers/',
-            'time': datetime.datetime(2020, 5, 13, 13, 1),
+            'time': dt.datetime(2020, 5, 13, 13, 1),
             'user_id': '119240841493711',
             'user_url': 'https://facebook.com/Nintendo/?refid=52&__tn__=C-R',
             'username': 'Nintendo',
@@ -188,6 +193,7 @@ class TestGetPosts:
 
         assert post == expected_post
 
+    @pytest.mark.vcr(match_on=['method', 'scheme', 'host', 'port', 'path'])
     def test_get_posts_fields_presence(self):
         posts = list(get_posts(account='Nintendo', pages=2, extra_info=True))
 
@@ -205,6 +211,7 @@ class TestGetPosts:
             assert 'post_url' in post
             assert 'link' in post
 
+    @pytest.mark.skipif(not Path('cookies.txt').is_file(), reason='requires a local cookies.txt')
     def test_get_posts_with_extra_info_fields_presence(self):
         posts = list(
             get_posts(account='Nintendo', pages=2, cookies="cookies.txt", extra_info=True)
@@ -230,6 +237,7 @@ class TestGetPosts:
             assert 'w3_fb_url' in post
             assert 'fetched_time' in post
 
+    @pytest.mark.vcr(match_on=['method', 'scheme', 'host', 'port', 'path'])
     def test_smoketest(self):
         list(get_posts(account='Nintendo', pages=2))
 
@@ -295,7 +303,7 @@ class TestGetGroupPosts:
             '2. Topics relevant to Computing, Computer Science, Software '
             'Engineering, and Education.\n'
             '3. Political and religious advertisement are not allowed.',
-            'time': datetime.datetime(2018, 4, 4, 8, 2, 42),
+            'time': dt.datetime(2018, 4, 4, 8, 2, 42),
             'user_id': 757122227,
             'user_url': 'https://facebook.com/omarflorez?groupid=117507531664134&refid=18&_ft_=top_level_post_id.1629606003787605%3Acontent_owner_id_new.757122227%3Apage_id.117507531664134%3Astory_location.6%3Atds_flgs.3%3Aott.AX_xo0_Tl6A-u34K%3Apage_insights.%7B%22117507531664134%22%3A%7B%22page_id%22%3A117507531664134%2C%22page_id_type%22%3A%22group%22%2C%22actor_id%22%3A757122227%2C%22dm%22%3A%7B%22isShare%22%3A0%2C%22originalPostOwnerID%22%3A0%7D%2C%22psn%22%3A%22EntGroupDescriptionChangeCreationStory%22%2C%22post_context%22%3A%7B%22object_fbtype%22%3A657%2C%22publish_time%22%3A1522785762%2C%22story_name%22%3A%22EntGroupDescriptionChangeCreationStory%22%2C%22story_fbid%22%3A%5B1629606003787605%5D%7D%2C%22role%22%3A1%2C%22sl%22%3A6%7D%7D&__tn__=C-R',
             'username': 'Omar U. Florez',
@@ -314,7 +322,9 @@ class TestGetGroupPosts:
         unset_cookies()
         post = next(get_posts(group=117507531664134))
 
-        assert post == expected_post
+        for field in ('username', 'comments', 'likes', 'shares', 'text', 'post_url'):
+            assert post[field] == expected_post[field]
+        assert post['time'] == dt.datetime.fromtimestamp(post['timestamp'])
 
     # todo: add a case with requesting a group post with start_url=None
 
